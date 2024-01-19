@@ -47,7 +47,182 @@ Any value returned is ignored.
 [system : Object] = A JavaScript object containing engine and host platform information properties; see API documentation for details.
 [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
 */
+const gridWidth = 32;
+const gridHeight = 32;
+const gravity = 0.0001// pix/update
+const BACKGROUND_COLOR = PS.makeRGB(121, 176, 224)
+const PLAYER_COLOR = PS.COLOR_YELLOW
+const TARGET_FPS = 30
+const PIPE_SPEED = 0.002
+class rectangle {
+	constructor(height, width, color, startingX, startingY, velocityX = 0, velocityY = 0) {
+		this.height = height;
+		this.width = width;
+		this.rawX = startingX;
+		this.x = Math.round(this.rawX);
+		this.rawY = startingY;
+		this.y = Math.round(this.rawY);
+		this.color = color;
+		this.velocityX = velocityX;
+		this.velocityY = velocityY;
+	}
 
+	blit() {
+		for (let i = 0; i < this.width; i++) {
+			for (let j = 0; j < this.height; j++) {
+				let xCoord = (this.x - Math.floor(this.width / 2) + i);
+				let yCoord = this.y - Math.floor(this.height/2) + j
+				if (yCoord >= 0 && yCoord < gridHeight && xCoord >= 0 && xCoord < gridWidth) {
+					PS.color(xCoord, yCoord, this.color);
+				}
+			}
+		}
+	}
+
+	unblit() {
+		for (let i = 0; i < this.width; i++) {
+			for (let j = 0; j < this.height; j++) {
+				let xCoord = (this.x - Math.floor(this.width / 2) + i);
+				let yCoord = this.y - Math.floor(this.height/2) + j
+				if (yCoord >= 0 && yCoord < gridHeight && xCoord >= 0 && xCoord < gridWidth) {
+					PS.color(xCoord, yCoord, BACKGROUND_COLOR);
+				}
+			}
+		}
+	}
+
+	moveToPosition() {
+		this.unblit();
+		this.x = Math.round(this.rawX);
+		this.y = Math.min(Math.round(this.rawY), gridHeight-Math.ceil(this.height/2));
+		this.blit();
+	}
+
+	changeDimensions(newWidth, newHeight) {
+		this.unblit();
+		this.width = newWidth;
+		this.height = newHeight;
+		this.blit();
+	}
+
+	processVelocity(deltaTime) {
+		this.rawX += (this.velocityX*deltaTime);
+		this.rawY += Math.min((this.velocityY*deltaTime), gridHeight-Math.ceil(this.height/2));
+		this.moveToPosition();
+	}
+}
+
+class Pipe extends rectangle {
+	constructor(height, width, color, startingX, mode) {
+		let startingY = gridHeight/2
+		if (mode === "top") {
+			startingY = 0+Math.floor(height/2)
+		}
+		else {
+			startingY = gridHeight-Math.ceil(height/2)
+		}
+		super(height, width, color, startingX, startingY)
+		this.mode = mode;
+		this.scored = false;
+	}
+
+	report() {
+		PS.debug(`Height: ${this.height}  |  X: ${this.rawX}\n`)
+	}
+
+	changeHeight(newHeight) {
+		this.height = newHeight;
+		if (this.mode === "top") {
+			this.rawY = 0+Math.floor(this.height/2)
+		}
+		else {
+			this.rawY = gridHeight-Math.ceil(this.height/2)
+		}
+	}
+
+	advance(speed, deltaTime, nextPair) {
+		this.rawX -= speed*deltaTime
+		this.moveToPosition()
+		if (this.rawX < -Math.ceil(this.width/2)) {
+			this.regenerate(nextPair)
+			if (this.mode === "top") {
+				return true;
+			}
+		}
+		return false;
+	}
+	regenerate(nextPair) {
+		this.rawX = gridWidth + Math.ceil(this.width/2)
+		let nextHeight = 0
+		if (this.mode === "top") {
+			nextHeight = nextPair[1]
+		}
+		else {
+			nextHeight = nextPair[0]
+		}
+		this.changeHeight(nextHeight)
+		this.scored = false;
+	}
+
+	checkScoring() {
+		if (this.mode === "top" && !this.scored && this.rawX < player.rawX) {
+			this.scored = true;
+			return true;
+		}
+		return false;
+	}
+
+	touchingPlayer() {
+		for (let i = 0; i < this.width; i++) {
+			for (let j = 0; j < this.height; j++) {
+				let xCoord = (this.x - Math.floor(this.width / 2) + i);
+				let yCoord = this.y - Math.floor(this.height/2) + j
+				if (yCoord >= 0 && yCoord < gridHeight && xCoord >= 0 && xCoord < gridWidth) {
+					for (let playerI = 0; playerI < 2; playerI++) {
+						for (let playerJ = 0; playerJ < 2; playerJ++) {
+							let playerXCoord = player.rawX+playerI;
+							let playerYCoord = player.rawY+playerJ;
+							if (Math.abs(xCoord-playerXCoord) < 0.5 && (Math.abs(yCoord-playerYCoord) < 0.5 || playerYCoord < 0)) {
+								PS.color(xCoord, yCoord, PS.COLOR_RED)
+								return true;
+							}
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+}
+
+class PhysicsRectangle extends rectangle{
+	constructor(height, width, color, startingX, startingY) {
+		super(height, width, color, startingX, startingY);
+		this.moveSpeed = 0.002;
+	}
+
+	doGravity(deltaTime) {
+		this.velocityY += gravity*deltaTime;
+	}
+
+}
+
+class Player extends PhysicsRectangle {
+	constructor(height, width, color, startingX, startingY, jumpForce) {
+		super(height, width, color, startingX, startingY)
+		this.jumpForce = jumpForce;
+	}
+
+	jump() {
+		this.velocityY = -this.jumpForce;
+	}
+	touchingGround() {
+		return (this.rawY > gridHeight)
+	}
+}
+
+
+let gameStarted = false;
 PS.init = function( system, options ) {
 	// Uncomment the following code line
 	// to verify operation:
@@ -64,7 +239,7 @@ PS.init = function( system, options ) {
 	// Uncomment the following code line and change
 	// the x and y parameters as needed.
 
-	// PS.gridSize( 8, 8 );
+	PS.gridSize( gridWidth, gridHeight);
 
 	// This is also a good place to display
 	// your game title or a welcome message
@@ -75,7 +250,16 @@ PS.init = function( system, options ) {
 	// PS.statusText( "Game" );
 
 	// Add any other initialization code you need here.
+	gameStarted = false;
+
 };
+
+function generateNewPair() {
+	let gapSize = Math.round(Math.random()*4+8) //random from 8 to 12
+	let gapPosition = Math.round(Math.random()*(gridHeight-16)+8)//random from 8 to gridHeight-8
+	return [gapPosition - Math.round(gapSize / 2), gridHeight - gapPosition - Math.round(gapSize / 2) - (gapSize % 2)]
+}
+
 
 /*
 PS.touch ( x, y, data, options )
@@ -86,7 +270,54 @@ This function doesn't have to do anything. Any value returned is ignored.
 [data : *] = The JavaScript value previously associated with bead(x, y) using PS.data(); default = 0.
 [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
 */
+let deltaTime = -1;
+let iter = 0
 
+
+const player = new Player(2, 2, PLAYER_COLOR, 8, 14, 0.03);
+let pairs = [generateNewPair(), generateNewPair(), generateNewPair()]
+let pipes = [
+	new Pipe(pairs[0][0], 3, PS.COLOR_GREEN, 12, "bottom"),
+	new Pipe(pairs[0][1], 3, PS.COLOR_GREEN, 12, "top"),
+	new Pipe(pairs[1][0], 3, PS.COLOR_GREEN, Math.round(12+gridWidth/3), "bottom"),
+	new Pipe(pairs[1][1], 3, PS.COLOR_GREEN, Math.round(12+gridWidth/3), "top"),
+	new Pipe(pairs[2][0], 3, PS.COLOR_GREEN, Math.round(12+(gridWidth/3)*2), "bottom"),
+	new Pipe(pairs[2][1], 3, PS.COLOR_GREEN, Math.round(12+(gridWidth/3)*2), "top")
+]
+let score = 0;
+let update = function() {
+	if (deltaTime === -1) {
+		deltaTime = Date.now();
+	}
+	const elapsed = Date.now() - deltaTime;
+	//////////
+	if (elapsed >= Math.floor(1000/TARGET_FPS)) {
+		PS.color(PS.ALL, PS.ALL, BACKGROUND_COLOR)
+		for (let i = 0; i < pipes.length; i++) {
+			if (pipes[i].advance(PIPE_SPEED, elapsed, pairs[2])) {
+				pairs.push(generateNewPair())
+				pairs.shift();
+			}
+			if (pipes[i].checkScoring()) {
+				score++;
+			}
+			if (pipes[i].touchingPlayer()) {
+				return
+			}
+		}
+		if (player.touchingGround()) {
+			return
+		}
+		player.doGravity(elapsed);
+		PS.statusText(score)
+		player.processVelocity(elapsed)
+
+		////////
+		deltaTime = Date.now()
+		PS.gridRefresh();
+	}
+	requestAnimationFrame(update)
+}
 PS.touch = function( x, y, data, options ) {
 	// Uncomment the following code line
 	// to inspect x/y parameters:
@@ -96,6 +327,7 @@ PS.touch = function( x, y, data, options ) {
 	// Add code here for mouse clicks/touches
 	// over a bead.
 };
+
 
 /*
 PS.release ( x, y, data, options )
@@ -128,9 +360,10 @@ This function doesn't have to do anything. Any value returned is ignored.
 PS.enter = function( x, y, data, options ) {
 	// Uncomment the following code line to inspect x/y parameters:
 
-	// PS.debug( "PS.enter() @ " + x + ", " + y + "\n" );
+	//PS.statusText( "PS.enter() @ " + x + ", " + y + "\n" );
 
 	// Add code here for when the mouse cursor/touch enters a bead.
+
 };
 
 /*
@@ -175,12 +408,19 @@ This function doesn't have to do anything. Any value returned is ignored.
 [ctrl : Boolean] = true if control key is held down, else false.
 [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
 */
-
+let jumpPressed = false;
 PS.keyDown = function( key, shift, ctrl, options ) {
 	// Uncomment the following code line to inspect first three parameters:
 
-	// PS.debug( "PS.keyDown(): key=" + key + ", shift=" + shift + ", ctrl=" + ctrl + "\n" );
-
+	//PS.debug( "PS.keyDown(): key=" + key + ", shift=" + shift + ", ctrl=" + ctrl + "\n" );
+	if (!gameStarted) {
+		gameStarted = true;
+		requestAnimationFrame(update);
+	}
+	if (key === 32 && !jumpPressed) {
+		jumpPressed = true;
+		player.jump();
+	}
 	// Add code here for when a key is pressed.
 };
 
@@ -195,6 +435,9 @@ This function doesn't have to do anything. Any value returned is ignored.
 */
 
 PS.keyUp = function( key, shift, ctrl, options ) {
+	if (key === 32) {
+		jumpPressed = false;
+	}
 	// Uncomment the following code line to inspect first three parameters:
 
 	// PS.debug( "PS.keyUp(): key=" + key + ", shift=" + shift + ", ctrl=" + ctrl + "\n" );
