@@ -221,7 +221,6 @@ class InputCell extends Cell {
     }
 
     checkInput(key) {
-        PS.debug("Checking input "+key+" for cell at "+this.x+", "+this.y+". Desired key is "+this.desiredKey+"\n")
         if (!this.gameManager.oppositeMode === true) {
             if (key === this.desiredKey) {
                 this.complete()
@@ -240,7 +239,6 @@ class OppositeCell extends Cell {
     }
 
     ready() {
-        PS.debug("Readying Opposite Cell with ID " +this.id)
 
         if (!this.gameManager.oppositeMode) {
             PS.color(PS.ALL, PS.ALL, PS.COLOR_RED)
@@ -254,7 +252,6 @@ class OppositeCell extends Cell {
             PS.audioPlay("fx_powerup6")
             this.gameManager.readyNext(this.id)
         }
-        PS.debug("Opposite Mode: "+this.gameManager.oppositeMode)
     }
 
     checkInput(key) {
