@@ -49,15 +49,21 @@ Any value returned is ignored.
 */
 const gridWidth = 32;
 const gridHeight = 32;
-const gravity = 0.0001// pix/update
-const BACKGROUND_COLOR = PS.makeRGB(121, 176, 224)
-const PLAYER_COLOR = PS.COLOR_YELLOW
+let gravity = 0.00001// pix/update
+const BACKGROUND_COLOR = PS.COLOR_BLUE
+const PLAYER_COLOR = PS.COLOR_GREEN
 const TARGET_FPS = 30
-const PIPE_SPEED = 0.002
+let PIPE_SPEED = 0.002
 class rectangle {
 	constructor(height, width, color, startingX, startingY, velocityX = 0, velocityY = 0) {
 		this.height = height;
 		this.width = width;
+
+		this.sprite = PS.spriteSolid(this.width, this.height)
+		PS.spriteSolidColor(this.sprite, color)
+		PS.spritePlane(this.sprite, 1)
+		PS.spriteAxis(this.sprite, 0, 0)
+
 		this.rawX = startingX;
 		this.x = Math.round(this.rawX);
 		this.rawY = startingY;
@@ -68,40 +74,13 @@ class rectangle {
 	}
 
 	blit() {
-		for (let i = 0; i < this.width; i++) {
-			for (let j = 0; j < this.height; j++) {
-				let xCoord = (this.x - Math.floor(this.width / 2) + i);
-				let yCoord = this.y - Math.floor(this.height/2) + j
-				if (yCoord >= 0 && yCoord < gridHeight && xCoord >= 0 && xCoord < gridWidth) {
-					PS.color(xCoord, yCoord, this.color);
-				}
-			}
-		}
-	}
-
-	unblit() {
-		for (let i = 0; i < this.width; i++) {
-			for (let j = 0; j < this.height; j++) {
-				let xCoord = (this.x - Math.floor(this.width / 2) + i);
-				let yCoord = this.y - Math.floor(this.height/2) + j
-				if (yCoord >= 0 && yCoord < gridHeight && xCoord >= 0 && xCoord < gridWidth) {
-					PS.color(xCoord, yCoord, BACKGROUND_COLOR);
-				}
-			}
-		}
+		PS.spriteSolidColor(this.sprite, this.color)
+		PS.spriteMove(this.sprite, this.x, this.y)
 	}
 
 	moveToPosition() {
-		this.unblit();
 		this.x = Math.round(this.rawX);
-		this.y = Math.min(Math.round(this.rawY), gridHeight-Math.ceil(this.height/2));
-		this.blit();
-	}
-
-	changeDimensions(newWidth, newHeight) {
-		this.unblit();
-		this.width = newWidth;
-		this.height = newHeight;
+		this.y = Math.round(this.rawY);
 		this.blit();
 	}
 
@@ -112,86 +91,65 @@ class rectangle {
 	}
 }
 
+const bottom = "top";
+
 class Pipe extends rectangle {
 	constructor(height, width, color, startingX, mode) {
 		let startingY = gridHeight/2
-		if (mode === "top") {
-			startingY = 0+Math.floor(height/2)
+		if (mode === bottom) {
+			startingY = 0
 		}
 		else {
-			startingY = gridHeight-Math.ceil(height/2)
+			startingY = 32-height
 		}
 		super(height, width, color, startingX, startingY)
 		this.mode = mode;
 		this.scored = false;
-	}
-
-	report() {
-		PS.debug(`Height: ${this.height}  |  X: ${this.rawX}\n`)
+		PS.spriteCollide(this.sprite, this.touching)
+		PS.spritePlane(this.sprite, 2)
 	}
 
 	changeHeight(newHeight) {
-		this.height = newHeight;
-		if (this.mode === "top") {
-			this.rawY = 0+Math.floor(this.height/2)
-		}
-		else {
-			this.rawY = gridHeight-Math.ceil(this.height/2)
-		}
+		this.height = newHeight
 	}
 
 	advance(speed, deltaTime, nextPair) {
 		this.rawX -= speed*deltaTime
 		this.moveToPosition()
-		if (this.rawX < -Math.ceil(this.width/2)) {
+		if (this.rawX < 0-this.width) {
 			this.regenerate(nextPair)
-			if (this.mode === "top") {
+			if (this.mode === bottom) {
 				return true;
 			}
 		}
 		return false;
 	}
 	regenerate(nextPair) {
-		this.rawX = gridWidth + Math.ceil(this.width/2)
+		this.rawX = gridWidth
 		let nextHeight = 0
-		if (this.mode === "top") {
-			nextHeight = nextPair[1]
+		if (this.mode === bottom) {
+			nextHeight = nextPair[0]
 		}
 		else {
-			nextHeight = nextPair[0]
+			nextHeight = nextPair[1]
 		}
 		this.changeHeight(nextHeight)
 		this.scored = false;
 	}
 
 	checkScoring() {
-		if (this.mode === "top" && !this.scored && this.rawX < player.rawX) {
+		if (this.mode === bottom && !this.scored && this.rawX < player.rawX) {
 			this.scored = true;
+			PIPE_SPEED *= 1.025
 			return true;
 		}
 		return false;
 	}
 
-	touchingPlayer() {
-		for (let i = 0; i < this.width; i++) {
-			for (let j = 0; j < this.height; j++) {
-				let xCoord = (this.x - Math.floor(this.width / 2) + i);
-				let yCoord = this.y - Math.floor(this.height/2) + j
-				if (yCoord >= 0 && yCoord < gridHeight && xCoord >= 0 && xCoord < gridWidth) {
-					for (let playerI = 0; playerI < 2; playerI++) {
-						for (let playerJ = 0; playerJ < 2; playerJ++) {
-							let playerXCoord = player.rawX+playerI;
-							let playerYCoord = player.rawY+playerJ;
-							if (Math.abs(xCoord-playerXCoord) < 0.5 && (Math.abs(yCoord-playerYCoord) < 0.5 || playerYCoord < 0)) {
-								PS.color(xCoord, yCoord, PS.COLOR_RED)
-								return true;
-							}
-						}
-					}
-				}
-			}
+	touching(s1, p1, s2, p2, type) {
+		if (s2 === player.sprite && !(s1 === player.sprite)) {
+			gameOver = true;
 		}
-		return false;
 	}
 }
 
@@ -202,7 +160,9 @@ class PhysicsRectangle extends rectangle{
 	}
 
 	doGravity(deltaTime) {
-		this.velocityY += gravity*deltaTime;
+		if (!jumpPressed) {
+			this.velocityY += gravity * deltaTime;
+		}
 	}
 
 }
@@ -211,10 +171,11 @@ class Player extends PhysicsRectangle {
 	constructor(height, width, color, startingX, startingY, jumpForce) {
 		super(height, width, color, startingX, startingY)
 		this.jumpForce = jumpForce;
+		PS.spritePlane(this.sprite, 3)
 	}
 
 	jump() {
-		this.velocityY = -this.jumpForce;
+		this.velocityY = -0.007
 	}
 	touchingGround() {
 		return (this.rawY > gridHeight)
@@ -223,6 +184,7 @@ class Player extends PhysicsRectangle {
 
 
 let gameStarted = false;
+let gameOver = false;
 PS.init = function( system, options ) {
 	// Uncomment the following code line
 	// to verify operation:
@@ -251,13 +213,16 @@ PS.init = function( system, options ) {
 
 	// Add any other initialization code you need here.
 	gameStarted = false;
+	gameOver = false;
+	PS.seed(1)
+	PS.border(PS.ALL, PS.ALL, 0)
+	PS.statusText("Press Space To Begin")
 
 };
 
 function generateNewPair() {
-	let gapSize = Math.round(Math.random()*4+8) //random from 8 to 12
-	let gapPosition = Math.round(Math.random()*(gridHeight-16)+8)//random from 8 to gridHeight-8
-	return [gapPosition - Math.round(gapSize / 2), gridHeight - gapPosition - Math.round(gapSize / 2) - (gapSize % 2)]
+	let gapPosition = PS.random(gridHeight-8-8)+8//random from 8 to gridHeight-8
+	return [gapPosition-5, 32-gapPosition-5]
 }
 
 
@@ -273,16 +238,17 @@ This function doesn't have to do anything. Any value returned is ignored.
 let deltaTime = -1;
 let iter = 0
 
-
+const background = new rectangle(gridHeight, gridWidth, BACKGROUND_COLOR, 0, 0)
 const player = new Player(2, 2, PLAYER_COLOR, 8, 14, 0.03);
 let pairs = [generateNewPair(), generateNewPair(), generateNewPair()]
+const pipeColor = 0xFF7F50
 let pipes = [
-	new Pipe(pairs[0][0], 3, PS.COLOR_GREEN, 12, "bottom"),
-	new Pipe(pairs[0][1], 3, PS.COLOR_GREEN, 12, "top"),
-	new Pipe(pairs[1][0], 3, PS.COLOR_GREEN, Math.round(12+gridWidth/3), "bottom"),
-	new Pipe(pairs[1][1], 3, PS.COLOR_GREEN, Math.round(12+gridWidth/3), "top"),
-	new Pipe(pairs[2][0], 3, PS.COLOR_GREEN, Math.round(12+(gridWidth/3)*2), "bottom"),
-	new Pipe(pairs[2][1], 3, PS.COLOR_GREEN, Math.round(12+(gridWidth/3)*2), "top")
+	new Pipe(pairs[0][0], 3, pipeColor, 18, "bottom"),
+	new Pipe(pairs[0][1], 3, pipeColor, 18, bottom),
+	new Pipe(pairs[1][0], 3, pipeColor, Math.round(18+gridWidth/3), "bottom"),
+	new Pipe(pairs[1][1], 3, pipeColor, Math.round(18+gridWidth/3), bottom),
+	new Pipe(pairs[2][0], 3, pipeColor, Math.round(18+(gridWidth/3)*2), "bottom"),
+	new Pipe(pairs[2][1], 3, pipeColor, Math.round(18+(gridWidth/3)*2), bottom)
 ]
 let score = 0;
 let update = function() {
@@ -292,7 +258,7 @@ let update = function() {
 	const elapsed = Date.now() - deltaTime;
 	//////////
 	if (elapsed >= Math.floor(1000/TARGET_FPS)) {
-		PS.color(PS.ALL, PS.ALL, BACKGROUND_COLOR)
+		background.blit()
 		for (let i = 0; i < pipes.length; i++) {
 			if (pipes[i].advance(PIPE_SPEED, elapsed, pairs[2])) {
 				pairs.push(generateNewPair())
@@ -301,8 +267,8 @@ let update = function() {
 			if (pipes[i].checkScoring()) {
 				score++;
 			}
-			if (pipes[i].touchingPlayer()) {
-				return
+			if (gameOver) {
+				return;
 			}
 		}
 		if (player.touchingGround()) {
@@ -417,10 +383,11 @@ PS.keyDown = function( key, shift, ctrl, options ) {
 		gameStarted = true;
 		requestAnimationFrame(update);
 	}
-	if (key === 32 && !jumpPressed) {
+	if (key === 32) {
 		jumpPressed = true;
 		player.jump();
 	}
+
 	// Add code here for when a key is pressed.
 };
 
@@ -437,6 +404,7 @@ This function doesn't have to do anything. Any value returned is ignored.
 PS.keyUp = function( key, shift, ctrl, options ) {
 	if (key === 32) {
 		jumpPressed = false;
+		player.velocityY = 0
 	}
 	// Uncomment the following code line to inspect first three parameters:
 
