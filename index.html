@@ -30,6 +30,15 @@
 							I wanted to explore the stateless nature of shader programming, and I figured the best way for me to understand it was to see if I could recreate something that had the illusion of state. I thought to myself, "what's something that is visually simple, but has a clear progression from one moment to the next?" and my mind immediately jumped to loading bars. Of course, just a rectangle traveling across the screen isn't very interesting. So I followed the common wisdom of how to make something interesting: do it, but like way more. I wanted a multi-stage animation, with both vertical and horizontal bars of different colors, and I especially knew I wanted to get a sort of "woven" look. That's what the first half of the animation turned out to be.<br><br>
 							For the second half of the animation, I wanted to move beyond sliding some rectangles across the screen. The first thing I thought of was having the bars change their width over time, and possibly be more complex than just a solid color. That's when I had the idea of using the bar not as an object to be displayed, but as a mask over another function. This realization allowed me to create a wave that progresses across the screen in much the same way as the earlier bars did. I wanted to create the effect of these waves, which in my mind started to represent a seismograph of sorts, freezing and collapsing. I wanted to keep my animation's timeline scalable, so I couldn't just save a time value and redraw the wave with a constant offset. Instead, I realized that if I set each pixel to whatever it was in the previous frame, that would generate the "freezing" effect I wanted. Afterwards, to create the "collapse" effect, I used a similar technique to set each pixel to the average color of its neighbors, effectively blurring the image. The blur reminded me of a video I watched a while ago regarding smoke simulations, and while I wasn't going to implement anything quite that complicated, I wanted to at least have the mouse leave a colorful trail that disperses over time. With the blur already implemented, all I had to do was set the pixels within a certain distance from the mouse to a set color.
 						</li>
+						<li>
+							Feedback included the following observations: 
+							<ul>
+								<li>"First like 10 seconds looks like TV static"</li>
+								<li>"Trippy sin wave usage"</li>
+								<li>"I like the mouse tracking stuff, its very pretty</li>
+								<li>"It seems kinda like old school TV"</li>
+							</ul>
+						</li>
 					</ul>
 				</li>
 			</ul>
