@@ -47,6 +47,13 @@
 						<li>
 							<a href="resources/CS4300/Assignment2/index.html">Voronoi Video Warper</a>
 						</li>
+						<li>
+							<p>When I first read the assignment description, I knew I wanted to do something with Voronoi noise. I've used it a decent amount in Blender, and had recently happened across a YouTube video in my recommendations talking about how it worked. Given the requirement to use live video, I came up with the idea of a sort of "broken mirror" effect, using the shard-like nature of Voronoi cells. I figured I could provide the user with the controls for the speed of the animation and what gets displayed in order to satisfy the interaction requirement.<br>
+							A lot of the challenge of this project came from creating a three-dimensional grid system to navigate in a two-dimensional space, since I wanted the Voronoi cells to animate smoothly over time. I had a fair bit of difficulty with the disconnect between the CPU and GPU, but eventually I got it to work. One aspect that was particularly challenging was debugging without access to any sort of debugger or console, due to the parallel nature of fragment shaders. It's awfully difficult to figure out what's making the points not see each other if I can't even see the points. Once I got the noise itself working, I had to figure out how to warp the image as it moved. I did this by first noting which point was nearest to the pixel, which it already had to know to make the Voronoi noise in the first place, and figuring out the distance between that point and the pixel itself on both the X and Y axes. I then multiply that vector by (1 - the linear distance to the nearest point), which makes the video get more distorted the closer it is to the edge of the Voronoi cell.</p>
+						</li>
+						<li>
+							<p>The first response I got was that the project was "really weird." It was compared to a funhouse mirror, in that it gets more confusing the longer you look at it. There was confusion about why one would want to draw the grid, which is fair, considering that was mostly a debug tool that I left in to make explaining the concept of Voronoi noise easier. One piece of feedback I'm especially proud of was that it was "pretty fun to watch the shattered mirror effect," especially given that the person providing this feedback had no idea that I had used the exact same phrase in my design intent. This person preferred the animation <i>not</i> moving, because it "made [their] eyes look really large." I imagine that when you don't know what's happening behind the scenes, the shifting motion of the Z-axis travel along the Voronoi grid could be rather headache-inducing.</p>
+						</li>
 					</ul>
 				</li>
 			</ul>
