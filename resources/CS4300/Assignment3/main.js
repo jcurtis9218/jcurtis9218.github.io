@@ -1,4 +1,4 @@
-import { default as seagulls } from '../../gulls.js'
+import { default as seagulls } from './gulls.js'
 import {Pane} from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
 
 const sg      = await seagulls.init(),
