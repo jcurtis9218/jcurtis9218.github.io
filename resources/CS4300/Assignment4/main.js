@@ -29,12 +29,12 @@ const delta = sg.uniform(0.0);
 const timescale = sg.uniform(1/100000);
 
 //Interactions
-const target_density = sg.uniform(num_particles/400)
-const pressure_multiplier = sg.uniform(1.5)
+const target_density = sg.uniform(8)
+const pressure_multiplier = sg.uniform(100)
 
 const pane = new Pane();
-pane.addBinding(target_density, 'value', {max: 10, min: 1, label:"Target Density"})
-pane.addBinding(pressure_multiplier, 'value', {max: 100, min: 0.1, label:"Pressure Multiplier"})
+pane.addBinding(target_density, 'value', {max: 50, min: 1, label:"Target Density"})
+pane.addBinding(pressure_multiplier, 'value', {max: 500, min: 1, label:"Pressure Multiplier"})
 pane.addBinding(paused, 'value' , {options: {on:1.0, off:0.0}, label:"Paused"})
 pane.addBinding(smoothing_radius, 'value', {min:0.0, max:1.0, step:0.01, label:"Smoothing Radius"})
 
