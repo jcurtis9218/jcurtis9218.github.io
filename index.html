@@ -65,6 +65,9 @@
 						<li>
 							<p>I was intrigued by the idea of biasing the direction of the chemical diffusion. I wanted to see what would happen if the diffusion pattern changed in the middle of the simulation, so I created an interface to bias the direction in real-time. It works by altering the coefficients of the Laplace operation, changing the influence the surrounding pixels have on the current pixel. I also added a pausing feature, which justs sets A'=A and B'=B, so the simulation can be adjusted without the intermediary values altering the result. I thought it would be interesting to look at not only the current values of the pixels, but how much they changed since the previous frame, so I added a "difference" color mode. In this mode, the red channel contains how much the chemical A value changed, and the green channel contains how much the chemical B value changed. This view proves especially interesting when altering the diffusion bias direction.</p>
 						</li>
+						<li>
+							<p>Feedback included remarks about how interesting it was to control the direction of the diffusion, as well as appreciation for the aesthetics of the "difference" color mode. Overall, I was pleased with the feedback I received, and I feel it aligns well with what I set out to accomplish.</p>
+						</li>
 					</ul>
 				</li>
 				<li>
@@ -75,6 +78,20 @@
 						</li>
 						<li>
 							<p>The first thing that came to mind in regard to particle simulation was a <a href="https://www.youtube.com/watch?v=rSKMYc1CQHE">video I watched a while ago</a> by a YouTuber I follow, <a href="https://www.youtube.com/@SebastianLague">Sebastian Lague</a>. He spoke at length about his experience creating and refining a fluid simulation, and I thought to follow his example. In that manner, I developed a particle simulation wherein particles act as samples in a density field, and attempt to maintain a consistent density through pressure forces exerted on them by their neighbors. I was primarily interested in liquid simulation, rather than something gaseous, so I implemented gravity as well. I don't think I quite got the density field calculations correct, since the simulation is rather chaotic, but the general behavior is decently realistic. I wanted to be able to play with the simulation a bit more directly, so I implemented a feature where the mouse can be used to "grab" a section of particles, move them, or throw them across the screen. I also provided controls for altering the target density and pressure scale, though I have tuned the defaults for those parameters to reliable values. The pressure scale in particular is very sensitive. The only "aesthetic" decision I can claim to have made is to make the particles appear blue in color, to vaguely resemble water.</p>
+						</li>
+						<li>
+							<p>Feedback for the fluid simulation was very positive. There wasn't much in the way of quantitative feedback, but I have it on good authority that the fluid simulation was "so sick."</p>
+						</li>
+					</ul>
+				</li>
+				<li>
+					<p>Assignment 5</p>
+					<ul>
+						<li>
+							<a href="resources/CS4300/Assignment5/index.html">Vants</a>
+						</li>
+						<li>
+							<p>I was messing around with some of the parameters in the example, and I discovered a set of turning angles that caused the vants to build angular, road-like structures. This inspired me to make a few different species, each of which having different goals. The constructor vants, the blue ones in my simulation, branch out first, building pathways behind them. They can only expand into empty space, making them prime targets to be taken over. The red vants follow along these pathways, taking over the space the blue vants have prepared for them, and expanding into the gaps between the paths as well. They are capable of overwriting the blue pathways, but as a consequence they also remove their own red areas behind them. Both of these species are doomed to extinction, however, since the green vants have spent their time lying low, and cultivating an irreplacable pheromone. They tend to keep to themselves, preferring to spend time in their own territory, but every so often there's a collective effort to expand. The green pheromones are an inexorable force of consumption, able to take over any territory it encounters, and being impossible to remove in return. I really like how the behaviors of the different vant species over time tell a sort of story, wherein the altruistic blue vants are cruelly taken advantage of by the overzealous red vants, who momentarily have it all before the tide of green vants unstoppably besieges their territory, slowly backing them into tighter and tighter spaces until there's nowhere left to go.</p>
 						</li>
 					</ul>
 				</li>
