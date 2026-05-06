@@ -95,6 +95,17 @@
 						</li>
 					</ul>
 				</li>
+				<li>
+					<p>Final</p>
+					<ul>
+						<li>
+							<a href="resources/CS4300/Final/index.html">Fluid Simulation - Marching Squares</a>
+						</li>
+						<li>
+							<p>For the final project, I decided to implement the marching squares algorithm in order to improve the visuals of my fluid simulation, as seen in Assignment 4. To begin, I'd like to talk about how the technical structure of the fluid simulation works, then I can cover how the marching squares render works on top of it. The fluid simulation, as it was, had a three-pass render. The first pass was through a compute shader, referred to from now on as the "density cache calculator," which loops over all the particles, and calculates the density of the fluid at each particle. This is done in a separate compute pass, so that each particle doesn't have to loop over each other particle every frame, and can instead simply look up the correct density value. After that, a second compute shader is run, which reads the densities, calculates the force applied to each particle, and updates the particles' positions and velocities accordingly. Finally, these particles are used as the vertices of a very simple fragment shader, that simply outputs a solid blue color. I thought the particle rendering was rather boring, though, so I wanted to make it appear more like a single cohesive mass. The first thing the marching squares algorithm needs is a grid of squares, as the name implies. This was constructed with a modular cell size, which controls the compute shader's dispatch count. Each invocation of the compute shader is therefore responsible for calculating the "activation values" at a single grid cell's four corners, and storing those into a buffer. I decided that a corner is "active" if the fluid density at that point exceeds a target value. Once the grid activations are calculated, we can feed that information into our new fragment shader, which runs in screen space this time, rather than using each particle as a vertex. The fragment shader figures out which grid cell it's in, and which corners of that grid cell are activated. It then uses the activation information to decide what shape that grid cell should be, which I defined. Once it knows what shape the grid cell should have, it must determine whether the current pixel is inside that shape. If it is, it sets the "brightness" value to 1, and 0 otherwise. The base blue color is then multiplied by this brightness value, which produces a solid, cohesive region of blue where the fluid is, and black background where there isn't enough fluid.</p>
+						</li>
+					</ul>
+				</li>
 			</ul>
 		</div>
 		
