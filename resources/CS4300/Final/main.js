@@ -7,7 +7,7 @@ const sg = await gulls.init(),
       compute_shader = await gulls.import( './compute.wgsl' ),
       cache_shader  = await gulls.import( './calculate_cached.wgsl' ),
       compute_grid_activations_shader = await gulls.import( './compute_grid.wgsl' ),
-      mesh_render_shader = gulls.constants.vertex + await gulls.import('/mesh_render.wgsl' )
+      mesh_render_shader = gulls.constants.vertex + await gulls.import('./mesh_render.wgsl' )
 
 Mouse.init()
 
